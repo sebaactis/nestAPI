@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=sebaactis
+      - POSTGRES_PASSWORD=sebaactis123
+      - POSTGRES_DB=nestdb
+    ports:
+      - 5499:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
