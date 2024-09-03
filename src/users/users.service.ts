@@ -10,6 +10,7 @@ export class UsersService {
     constructor(private readonly prisma: PrismaService) { }
 
     async findAll(): Promise<UserResponse[]> {
+
         return await this.prisma.user.findMany({
             select: {
                 id: true,
@@ -25,7 +26,6 @@ export class UsersService {
                 username
             }
         });
-
         return user;
     }
 
