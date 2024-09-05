@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 
@@ -8,8 +8,13 @@ export class AuthController {
 
     @HttpCode(HttpStatus.OK)
     @Post('login')
-    signIn(@Body() signInDto: Record<string, any>) {
-        return this.authService.signIn(signInDto.username, signInDto.password);
+    async signIn(@Body() signInDto: Record<string, any>) {
+        try {
+            const login = await this.authService.signIn(signInDto.username, signInDto.password);
+            return login;
+        } catch (error) {
+            throw new HttpException(error.message, error.status)
+        }
     }
 
     @UseGuards(AuthGuard)
@@ -18,3 +23,4 @@ export class AuthController {
         return req.user;
     }
 }
+

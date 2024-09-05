@@ -1,20 +1,21 @@
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { createUserDto } from './dto/createUserDto';
+import { createHash } from 'src/utils/password';
+import { UserResponse } from 'src/utils/types';
 
 @Controller('users')
 export class UserController {
     constructor(private readonly usersService: UsersService) { }
 
     @Get()
-    async getAll() {
+    async getAll(): Promise<UserResponse[]> {
         try {
             return await this.usersService.findAll();
         }
         catch {
             throw new HttpException('Error while fetching users', HttpStatus.INTERNAL_SERVER_ERROR)
         }
-
     }
 
     @Get('/:username')
@@ -44,13 +45,10 @@ export class UserController {
     @Post()
     async create(@Body() createUserDto: createUserDto) {
         try {
+            createUserDto.password = await createHash(createUserDto.password)
             const userCreate = await this.usersService.create(createUserDto);
 
-            return {
-                email: userCreate.email,
-                username: userCreate.username,
-                status: "CREATED"
-            }
+            return userCreate;
 
         } catch (error) {
 

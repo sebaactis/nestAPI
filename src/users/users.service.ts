@@ -1,22 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { User, UserType, Wallet } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { createUserDto } from './dto/createUserDto';
-
-type UserResponse = Omit<User, 'password'>
-
+import { WalletService } from 'src/wallet/wallet.service';
+import { UserResponse } from 'src/utils/types';
 @Injectable()
 export class UsersService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService, private readonly walletService: WalletService) { }
 
     async findAll(): Promise<UserResponse[]> {
-        return await this.prisma.user.findMany({
-            select: {
-                id: true,
-                username: true,
-                email: true
+        const users = await this.prisma.user.findMany({
+
+            include: {
+                userType: true,
+                wallet: true
             }
         })
+
+        return users.map(user => ({
+            email: user.email,
+            username: user.username,
+            userType: user.userType,
+            wallet: user.wallet,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        }))
     }
 
     async findOne(username: string): Promise<User | undefined> {
@@ -29,7 +37,7 @@ export class UsersService {
         return user;
     }
 
-    async create(user: createUserDto): Promise<createUserDto> {
+    async create(user: createUserDto): Promise<User> {
 
         const emailCheck = await this.prisma.user.findFirst({
             where: {
@@ -51,12 +59,21 @@ export class UsersService {
             throw new Error(`The username: ${user.username}, already exists`)
         }
 
-        return await this.prisma.user.create({
+        const walletId = await this.walletService.create(user);
+
+        const newUser = await this.prisma.user.create({
             data: {
                 email: user.email,
                 username: user.username,
-                password: user.password
+                password: user.password,
+                userTypeId: +user.userTypeId,
+                walletId,
+                createdAt: new Date(),
+                updatedAt: new Date()
             }
         })
+
+        return newUser;
+
     }
 }
