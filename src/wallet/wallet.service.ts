@@ -6,16 +6,28 @@ import { createUserDto } from "src/users/dto/createUserDto";
 export class WalletService {
     constructor(private readonly prismaService: PrismaService) { }
 
-    async create(username: createUserDto) {
-       const wallet = await this.prismaService.wallet.create({
+    async create() {
+        const wallet = await this.prismaService.wallet.create({
             data: {
                 currencyId: 1,
                 balance: 0,
                 createdAt: new Date(),
                 updatedAt: new Date()
             }
-       })
+        })
 
-       return wallet.id;
+        return wallet.id;
+    }
+
+    async getBalance(email: string) {
+        const balance = await this.prismaService.wallet.findFirst({
+            where: {
+                user: {
+                    email
+                }
+            }
+        })
+
+        return balance;
     }
 }

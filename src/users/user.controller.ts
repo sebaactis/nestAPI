@@ -1,8 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { createUserDto } from './dto/createUserDto';
 import { createHash } from 'src/utils/password';
 import { UserResponse } from 'src/utils/types';
+import { updateUserDto } from './dto/updateUserDto';
 
 @Controller('users')
 export class UserController {
@@ -28,10 +29,7 @@ export class UserController {
                 throw new HttpException('User not found', HttpStatus.NOT_FOUND)
             }
 
-            return {
-                email: user.email,
-                username: user.username
-            }
+            return { ...user, password: undefined };
         } catch (error) {
 
             if (error instanceof HttpException) {
@@ -52,6 +50,43 @@ export class UserController {
 
         } catch (error) {
 
+            if (!(error instanceof HttpException)) {
+                throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+            }
+            throw new HttpException('Error while creating user', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    @Put()
+    async update(@Body() updateUserDto: updateUserDto) {
+
+        try {
+            const updateUser = await this.usersService.update(updateUserDto);
+
+            if (!updateUser) {
+                throw new Error('We cant update the user, please check your information and try again');
+            }
+
+            return {
+                message: `The username with email: ${updateUser.email} has been updated successfully. Your new username is ${updateUser.username}`,
+                status: HttpStatus.OK
+            }
+
+        } catch (error) {
+            if (!(error instanceof HttpException)) {
+                throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+            }
+            throw new HttpException('Error while creating user', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+    @Delete('/:email')
+    async delete(@Param('email') email: string) {
+        try {
+            const deleteUser = await this.usersService.delete(email);
+
+            return deleteUser;
+
+        } catch (error) {
             if (!(error instanceof HttpException)) {
                 throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
             }

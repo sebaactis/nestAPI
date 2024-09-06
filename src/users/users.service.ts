@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { User, UserType, Wallet } from '@prisma/client';
+import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { createUserDto } from './dto/createUserDto';
 import { WalletService } from 'src/wallet/wallet.service';
 import { UserResponse } from 'src/utils/types';
+import { updateUserDto } from './dto/updateUserDto';
 @Injectable()
 export class UsersService {
     constructor(private readonly prisma: PrismaService, private readonly walletService: WalletService) { }
@@ -21,9 +22,7 @@ export class UsersService {
             email: user.email,
             username: user.username,
             userType: user.userType,
-            wallet: user.wallet,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
+            wallet: user.wallet
         }))
     }
 
@@ -32,8 +31,13 @@ export class UsersService {
         const user = await this.prisma.user.findFirst({
             where: {
                 username
+            },
+            include: {
+                userType: true,
+                wallet: true
             }
         });
+
         return user;
     }
 
@@ -59,7 +63,7 @@ export class UsersService {
             throw new Error(`The username: ${user.username}, already exists`)
         }
 
-        const walletId = await this.walletService.create(user);
+        const walletId = await this.walletService.create();
 
         const newUser = await this.prisma.user.create({
             data: {
@@ -75,5 +79,52 @@ export class UsersService {
 
         return newUser;
 
+    }
+
+    async update(user: updateUserDto): Promise<User> | null {
+        const userCheck = await this.prisma.user.findFirst({
+            where: {
+                email: user.email
+            }
+        })
+
+        if (userCheck) {
+            const update = await this.prisma.user.update({
+                where: {
+                    email: userCheck.email
+                },
+                data: {
+                    username: user.username,
+                    updatedAt: new Date()
+                }
+            })
+            return update;
+        }
+    }
+
+    async delete(email: string) {
+        const userCheck = await this.prisma.user.findFirst({
+            where: {
+                email
+            }
+        })
+
+        if (!userCheck) {
+            throw new Error('User not found')
+        }
+
+        const checkWalletBalance = await this.walletService.getBalance(email);
+
+        if (checkWalletBalance.balance !== 0) {
+            throw new Error('You cant delete a user when the wallet has money inside. Please let the wallet in 0 and try again')
+        }
+
+        const deleteUser = await this.prisma.user.delete({
+            where: {
+                email
+            }
+        })
+
+        return deleteUser;
     }
 }

@@ -12,6 +12,7 @@ model User {
   email    String @unique
   username String
   password String
+  codeChangePassword String?
 
   userTypeId Int
   userType   UserType @relation(fields: [userTypeId], references: [id])
@@ -40,7 +41,7 @@ model Wallet {
   user       User?
   currencyId Int
   currency   Currency @relation(fields: [currencyId], references: [id])
-  balance    Decimal
+  balance    Float
 
   contact Contact[]
 
@@ -91,7 +92,7 @@ model Transfer {
   walletToId Int
   walletTo   Wallet @relation("WalletTo", fields: [walletToId], references: [id])
 
-  amount Decimal
+  amount Float
 
   currencyId Int
   currency   Currency @relation(fields: [currencyId], references: [id])
@@ -125,7 +126,7 @@ model Transaction {
   currencyId Int
   currency   Currency @relation(fields: [currencyId], references: [id])
 
-  amount      Decimal
+  amount      Float
   description String
 
   statusId Int
