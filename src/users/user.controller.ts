@@ -4,6 +4,7 @@ import { createUserDto } from './dto/createUserDto';
 import { createHash } from 'src/utils/password';
 import { UserResponse } from 'src/utils/types';
 import { updateUserDto } from './dto/updateUserDto';
+import { ChangePasswordDto } from './dto/changePasswordDto';
 
 @Controller('users')
 export class UserController {
@@ -91,6 +92,20 @@ export class UserController {
                 throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
             }
             throw new HttpException('Error while creating user', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    @Post("/changePassword")
+    async changePassword(@Body() changePasswordDto: ChangePasswordDto) {
+        try {
+            const changePassword = await this.usersService.changePassword(changePasswordDto);
+
+            return changePassword;
+        } catch (error) {
+            if (!(error instanceof HttpException)) {
+                throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+            }
+            throw new HttpException(error.message, error.getStatus())
         }
     }
 }

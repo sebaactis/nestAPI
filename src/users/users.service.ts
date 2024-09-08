@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { createUserDto } from './dto/createUserDto';
 import { WalletService } from 'src/wallet/wallet.service';
 import { UserResponse } from 'src/utils/types';
 import { updateUserDto } from './dto/updateUserDto';
+import { ChangePasswordDto } from './dto/changePasswordDto';
+import { createHash, validatePassword } from 'src/utils/password';
 @Injectable()
 export class UsersService {
     constructor(private readonly prisma: PrismaService, private readonly walletService: WalletService) { }
@@ -126,5 +128,51 @@ export class UsersService {
         })
 
         return deleteUser;
+    }
+
+    async changePassword(changePasswordDto: ChangePasswordDto) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                email: changePasswordDto.email
+            }
+        })
+
+        if (!user) {
+            throw new Error('User not found, please try with another user')
+        }
+
+        const checkPassword = await validatePassword(user.password, changePasswordDto.password);
+
+        if (!checkPassword) {
+            throw new UnauthorizedException();
+        }
+
+        if (changePasswordDto.newPassword !== changePasswordDto.confirmNewPassword) {
+            throw new Error('The new password and the confirme new password do not match')
+        }
+
+        if (changePasswordDto.newPassword === changePasswordDto.password) {
+            throw new Error('The new password is the same as the old password')
+        }
+
+        const newPassword = await createHash(changePasswordDto.newPassword)
+
+        const change = await this.prisma.user.update({
+            where: {
+                email: changePasswordDto.email
+            },
+            data: {
+                password: newPassword
+            }
+        })
+
+        if (change) {
+            return {
+                message: "The password has been updated successfully",
+                status: 200
+            }
+        }
+
+        throw new Error('We have an error updating the password')
     }
 }
