@@ -7,6 +7,8 @@ import { UserResponse } from 'src/utils/types';
 import { updateUserDto } from './dto/updateUserDto';
 import { ChangePasswordDto } from './dto/changePasswordDto';
 import { createHash, validatePassword } from 'src/utils/password';
+import { randomUUID } from 'crypto';
+import { RecoveryPasswordDto } from './dto/recoveryPasswordDto';
 @Injectable()
 export class UsersService {
     constructor(private readonly prisma: PrismaService, private readonly walletService: WalletService) { }
@@ -174,5 +176,74 @@ export class UsersService {
         }
 
         throw new Error('We have an error updating the password')
+    }
+
+    async forgetPassword(email: string) {
+
+        const user = await this.prisma.user.findFirst({
+            where: {
+                email
+            }
+        })
+
+        console.log(user);
+
+        if (!user) {
+            throw new Error('User not found, please try with another user')
+        }
+
+        return await this.prisma.user.update({
+            where: {
+                email
+            },
+            data: {
+                recoveryPasswordToken: randomUUID(),
+                recoveryPasswordTokenExpiration: new Date(new Date().getTime() + 5 * 60 * 1000)
+            }
+        })
+    }
+
+    async recoveryPassword(recoveryPasswordDto: RecoveryPasswordDto) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                email: recoveryPasswordDto.email,
+                recoveryPasswordTokenExpiration: {
+                    gt: new Date()
+                }
+            }
+        })
+
+        if (!user) {
+            throw new Error('User not found, or token expiration, please try with another user')
+        }
+
+        if (user.recoveryPasswordToken !== recoveryPasswordDto.recoveryToken) {
+            throw new Error('The recovery token is invalid, please check and try again')
+        }
+
+        if (recoveryPasswordDto.newPassword !== recoveryPasswordDto.confirmNewPassword) {
+            throw new Error('The new password and the confirme new password do not match')
+        }
+
+        const update = await this.prisma.user.update({
+            where: {
+                email: recoveryPasswordDto.email
+            },
+            data: {
+                password: await createHash(recoveryPasswordDto.newPassword),
+                recoveryPasswordToken: null,
+                recoveryPasswordTokenExpiration: null
+            }
+        })
+
+        if (!update) {
+            throw new Error('Error while updated the password, please try again')
+        }
+
+        return {
+            message: "The password has been updated successfully",
+            status: 200
+        }
+
     }
 }

@@ -5,6 +5,7 @@ import { createHash } from 'src/utils/password';
 import { UserResponse } from 'src/utils/types';
 import { updateUserDto } from './dto/updateUserDto';
 import { ChangePasswordDto } from './dto/changePasswordDto';
+import { RecoveryPasswordDto } from './dto/recoveryPasswordDto';
 
 @Controller('users')
 export class UserController {
@@ -101,6 +102,37 @@ export class UserController {
             const changePassword = await this.usersService.changePassword(changePasswordDto);
 
             return changePassword;
+        } catch (error) {
+            if (!(error instanceof HttpException)) {
+                throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+            }
+            throw new HttpException(error.message, error.getStatus())
+        }
+    }
+
+    @Post("/forgetPassword")
+    async forgetPassword(@Body() body) {
+
+        const { email } = body;
+
+        try {
+            const forgetPassword = await this.usersService.forgetPassword(email);
+
+            return forgetPassword;
+        } catch (error) {
+            if (!(error instanceof HttpException)) {
+                throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+            }
+            throw new HttpException(error.message, error.getStatus())
+        }
+    }
+
+    @Post("/recoveryPassword")
+    async recoveryPassword(@Body() recoveryPasswordDto: RecoveryPasswordDto) {
+        try {
+            const recovery = await this.usersService.recoveryPassword(recoveryPasswordDto);
+            
+            return recovery;
         } catch (error) {
             if (!(error instanceof HttpException)) {
                 throw new HttpException(error.message, HttpStatus.BAD_REQUEST)

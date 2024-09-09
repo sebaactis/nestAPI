@@ -12,7 +12,8 @@ model User {
   email    String @unique
   username String
   password String
-  codeChangePassword String?
+  recoveryPasswordToken String?
+  recoveryPasswordTokenExpiration DateTime?
 
   userTypeId Int
   userType   UserType @relation(fields: [userTypeId], references: [id])
