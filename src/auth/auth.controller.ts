@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Req, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
+import { AuthGuard } from '@nestjs/passport';
+
 
 @Controller('auth')
 export class AuthController {
@@ -17,10 +18,14 @@ export class AuthController {
         }
     }
 
-    @UseGuards(AuthGuard)
-    @Get('profile')
-    getProfile(@Request() req) {
-        return req.user;
+    @Get('/google')
+    @UseGuards(AuthGuard('google'))
+    async googleAuth(@Req() req) { }
+
+    @Get('/google/callback')
+    @UseGuards(AuthGuard('google'))
+    googleAuthRedirect(@Req() req) {
+        return { user: req.user };
     }
 }
 
