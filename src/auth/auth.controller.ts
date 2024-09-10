@@ -11,7 +11,7 @@ export class AuthController {
     @Post('login')
     async signIn(@Body() signInDto: Record<string, any>) {
         try {
-            const login = await this.authService.signIn(signInDto.username, signInDto.password);
+            const login = await this.authService.signIn(signInDto.email, signInDto.password);
             return login;
         } catch (error) {
             throw new HttpException(error.message, error.status)
@@ -22,10 +22,21 @@ export class AuthController {
     @UseGuards(AuthGuard('google'))
     async googleAuth(@Req() req) { }
 
+    @HttpCode(HttpStatus.CREATED)
     @Get('/google/callback')
     @UseGuards(AuthGuard('google'))
-    googleAuthRedirect(@Req() req) {
-        return { user: req.user };
+    async googleAuthRedirect(@Req() req) {
+        try {
+            const userVerified = await this.authService.registerByOAuth(req.user)
+            return {
+                payload: {
+                    ...userVerified,
+                    password: undefined
+                }
+            }
+        } catch (error) {
+            throw new HttpException(error.message, error.status)
+        }
     }
 }
 

@@ -1,11 +1,12 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { createUserDto } from './dto/createUserDto';
-import { createHash } from 'src/utils/password';
 import { UserResponse } from 'src/utils/types';
 import { updateUserDto } from './dto/updateUserDto';
 import { ChangePasswordDto } from './dto/changePasswordDto';
 import { RecoveryPasswordDto } from './dto/recoveryPasswordDto';
+import { AuthJwtGuard } from 'src/auth/guards/authJwt.guard';
+import { createHash } from 'crypto';
 
 @Controller('users')
 export class UserController {
@@ -21,11 +22,11 @@ export class UserController {
         }
     }
 
-    @Get('/:username')
-    async getOne(@Param('username') username: string) {
+    @Get('/:email')
+    async getOne(@Param('email') email: string) {
 
         try {
-            const user = await this.usersService.findOne(username);
+            const user = await this.usersService.findOne(email);
 
             if (!user) {
                 throw new HttpException('User not found', HttpStatus.NOT_FOUND)
@@ -45,7 +46,7 @@ export class UserController {
     @Post()
     async create(@Body() createUserDto: createUserDto) {
         try {
-            createUserDto.password = await createHash(createUserDto.password)
+            
             const userCreate = await this.usersService.create(createUserDto);
 
             return { ...userCreate, password: undefined };
@@ -82,7 +83,7 @@ export class UserController {
             throw new HttpException('Error while creating user', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
-    
+
     @Delete('/:email')
     async delete(@Param('email') email: string) {
         try {
@@ -170,4 +171,11 @@ export class UserController {
             throw new HttpException(error.message, error.getStatus())
         }
     }
+
+    @Get("/protected/test")
+    @UseGuards(AuthJwtGuard)
+    async testGuard() {
+        return { message: "Recurso protegido" }
+    }
+
 }

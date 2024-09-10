@@ -20,7 +20,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         const payload = {
             email: emails[0].value,
             username: profile.name.givenName + profile.name.familyName,
-            accessToken
+            accessToken,
         }
 
         done(null, payload)

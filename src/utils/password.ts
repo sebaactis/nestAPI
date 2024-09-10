@@ -5,5 +5,6 @@ export const createHash = async (password: string) => {
 }
 
 export const validatePassword = async (userPassword: string, password: string) => {
+    console.log(userPassword, password)
     return await bycrypt.compare(password, userPassword);
 }

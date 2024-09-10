@@ -30,11 +30,11 @@ export class UsersService {
         }))
     }
 
-    async findOne(username: string): Promise<User | undefined> {
+    async findOne(email: string): Promise<User | undefined> {
 
         const user = await this.prisma.user.findFirst({
             where: {
-                username
+                email
             },
             include: {
                 userType: true,
@@ -73,7 +73,7 @@ export class UsersService {
             data: {
                 email: user.email,
                 username: user.username,
-                password: user.password,
+                password: await createHash(user.password),
                 userTypeId: +user.userTypeId,
                 walletId,
                 createdAt: new Date(),
