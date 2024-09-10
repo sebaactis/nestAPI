@@ -106,7 +106,7 @@ export class UsersService {
         }
     }
 
-    async delete(email: string) {
+    async delete(email: string) : Promise<User | null> {
         const userCheck = await this.prisma.user.findFirst({
             where: {
                 email
@@ -185,8 +185,6 @@ export class UsersService {
                 email
             }
         })
-
-        console.log(user);
 
         if (!user) {
             throw new Error('User not found, please try with another user')

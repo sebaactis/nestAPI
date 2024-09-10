@@ -48,7 +48,7 @@ export class UserController {
             createUserDto.password = await createHash(createUserDto.password)
             const userCreate = await this.usersService.create(createUserDto);
 
-            return userCreate;
+            return { ...userCreate, password: undefined };
 
         } catch (error) {
 
@@ -59,6 +59,7 @@ export class UserController {
         }
     }
 
+    @HttpCode(200)
     @Put()
     async update(@Body() updateUserDto: updateUserDto) {
 
@@ -81,12 +82,20 @@ export class UserController {
             throw new HttpException('Error while creating user', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
+    
     @Delete('/:email')
     async delete(@Param('email') email: string) {
         try {
             const deleteUser = await this.usersService.delete(email);
 
-            return deleteUser;
+            if (!deleteUser) {
+                throw new Error('We cant delete the user, please check your information and try again');
+            }
+
+            return {
+                message: `The user ${email} has been deleted`,
+                status: HttpStatus.OK
+            }
 
         } catch (error) {
             if (!(error instanceof HttpException)) {
@@ -96,12 +105,20 @@ export class UserController {
         }
     }
 
+    @HttpCode(200)
     @Post("/changePassword")
     async changePassword(@Body() changePasswordDto: ChangePasswordDto) {
         try {
             const changePassword = await this.usersService.changePassword(changePasswordDto);
 
-            return changePassword;
+            if (!changePassword) {
+                throw new Error('We cant update the password user, please check your information and try again');
+            }
+
+            return {
+                message: "The user password has been changed",
+                status: HttpStatus.OK
+            }
         } catch (error) {
             if (!(error instanceof HttpException)) {
                 throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
@@ -110,6 +127,7 @@ export class UserController {
         }
     }
 
+    @HttpCode(200)
     @Post("/forgetPassword")
     async forgetPassword(@Body() body) {
 
@@ -118,7 +136,11 @@ export class UserController {
         try {
             const forgetPassword = await this.usersService.forgetPassword(email);
 
-            return forgetPassword;
+            return {
+                forgetPassword: { ...forgetPassword, password: undefined },
+                status: HttpStatus.OK
+            };
+
         } catch (error) {
             if (!(error instanceof HttpException)) {
                 throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
@@ -127,12 +149,20 @@ export class UserController {
         }
     }
 
+    @HttpCode(200)
     @Post("/recoveryPassword")
     async recoveryPassword(@Body() recoveryPasswordDto: RecoveryPasswordDto) {
         try {
             const recovery = await this.usersService.recoveryPassword(recoveryPasswordDto);
-            
-            return recovery;
+
+            if (!recovery) {
+                throw new Error('We cant recovery the password user, please check your information and try again');
+            }
+
+            return {
+                message: "The password has been reset successfully",
+                status: HttpStatus.OK
+            };
         } catch (error) {
             if (!(error instanceof HttpException)) {
                 throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
