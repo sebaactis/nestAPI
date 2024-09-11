@@ -30,4 +30,14 @@ export class WalletService {
 
         return balance;
     }
+
+    async delete(id: number) {
+        const deleteU = await this.prismaService.wallet.delete({
+            where: {
+                id
+            }
+        })
+
+        return deleteU;
+    }
 }

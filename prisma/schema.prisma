@@ -19,7 +19,7 @@ model User {
   userType   UserType @relation(fields: [userTypeId], references: [id])
 
   walletId Int    @unique
-  wallet   Wallet @relation(fields: [walletId], references: [id])
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   contact Contact[]
 

@@ -106,7 +106,7 @@ export class UsersService {
         }
     }
 
-    async delete(email: string) : Promise<User | null> {
+    async delete(email: string): Promise<User | null> {
         const userCheck = await this.prisma.user.findFirst({
             where: {
                 email
@@ -117,9 +117,9 @@ export class UsersService {
             throw new Error('User not found')
         }
 
-        const checkWalletBalance = await this.walletService.getBalance(email);
+        const wallet = await this.walletService.getBalance(email);
 
-        if (checkWalletBalance.balance !== 0) {
+        if (wallet.balance !== 0) {
             throw new Error('You cant delete a user when the wallet has money inside. Please let the wallet in 0 and try again')
         }
 
@@ -128,6 +128,8 @@ export class UsersService {
                 email
             }
         })
+
+        await this.walletService.delete(wallet.id)
 
         return deleteUser;
     }
