@@ -6,7 +6,6 @@ import { updateUserDto } from './dto/updateUserDto';
 import { ChangePasswordDto } from './dto/changePasswordDto';
 import { RecoveryPasswordDto } from './dto/recoveryPasswordDto';
 import { AuthJwtGuard } from 'src/auth/guards/authJwt.guard';
-import { createHash } from 'crypto';
 
 @Controller('users')
 export class UserController {
@@ -46,7 +45,7 @@ export class UserController {
     @Post()
     async create(@Body() createUserDto: createUserDto) {
         try {
-            
+
             const userCreate = await this.usersService.create(createUserDto);
 
             return { ...userCreate, password: undefined };
@@ -60,6 +59,7 @@ export class UserController {
         }
     }
 
+    @UseGuards(AuthJwtGuard)
     @HttpCode(200)
     @Put()
     async update(@Body() updateUserDto: updateUserDto) {
@@ -84,6 +84,7 @@ export class UserController {
         }
     }
 
+    @UseGuards(AuthJwtGuard)
     @Delete('/:email')
     async delete(@Param('email') email: string) {
         try {
@@ -106,6 +107,7 @@ export class UserController {
         }
     }
 
+    @UseGuards(AuthJwtGuard)
     @HttpCode(200)
     @Post("/changePassword")
     async changePassword(@Body() changePasswordDto: ChangePasswordDto) {
@@ -170,12 +172,6 @@ export class UserController {
             }
             throw new HttpException(error.message, error.getStatus())
         }
-    }
-
-    @Get("/protected/test")
-    @UseGuards(AuthJwtGuard)
-    async testGuard() {
-        return { message: "Recurso protegido" }
     }
 
 }

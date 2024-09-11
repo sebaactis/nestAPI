@@ -11,4 +11,4 @@ import { AuthJwtGuard } from 'src/auth/guards/authJwt.guard';
   controllers: [UserController],
   exports: [UsersService]
 })
-export class UsersModule {}
+export class UsersModule { }
