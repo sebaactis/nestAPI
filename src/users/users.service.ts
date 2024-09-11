@@ -45,7 +45,7 @@ export class UsersService {
         return user;
     }
 
-    async create(user: createUserDto): Promise<User> {
+    async create(user: createUserDto) {
 
         const emailCheck = await this.prisma.user.findFirst({
             where: {
@@ -67,22 +67,39 @@ export class UsersService {
             throw new Error(`The username: ${user.username}, already exists`)
         }
 
-        const walletId = await this.walletService.create();
 
-        const newUser = await this.prisma.user.create({
-            data: {
-                email: user.email,
-                username: user.username,
-                password: await createHash(user.password),
-                userTypeId: +user.userTypeId,
-                walletId,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            }
+        return await this.prisma.$transaction(async (prisma) => {
+            const newUser = await prisma.user.create({
+                data: {
+                    email: user.email,
+                    username: user.username,
+                    password: await createHash(user.password),
+                    userTypeId: +user.userTypeId,
+                    walletId: 0,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+            });
+
+            const newWallet = await prisma.wallet.create({
+                data: {
+                    userId: newUser.id,
+                    currencyId: 1,
+                    balance: 0,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+            });
+
+            await prisma.user.update({
+                where: { id: newUser.id },
+                data: {
+                    walletId: newWallet.id,
+                },
+            });
+
+            return { newUser: { ...newUser, walletId: newWallet.id, password: undefined }, newWallet };
         })
-
-        return newUser;
-
     }
 
     async update(user: updateUserDto): Promise<User> | null {
@@ -117,6 +134,7 @@ export class UsersService {
             throw new Error('User not found')
         }
 
+
         const wallet = await this.walletService.getBalance(email);
 
         if (wallet.balance !== 0) {
@@ -128,8 +146,6 @@ export class UsersService {
                 email
             }
         })
-
-        await this.walletService.delete(wallet.id)
 
         return deleteUser;
     }

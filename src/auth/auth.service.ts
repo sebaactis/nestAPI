@@ -29,7 +29,7 @@ export class AuthService {
 
         return {
             message: "User registered succesfully",
-            accessToken: await this.jwtService.signAsync({ id: userCreate.id, email: userCreate.email }),
+            accessToken: await this.jwtService.signAsync({ id: userCreate.newUser.id, email: userCreate.newUser.email }),
             status: 201
         };
     }

@@ -20,6 +20,7 @@ export class WalletService {
     }
 
     async getBalance(email: string) {
+
         const balance = await this.prismaService.wallet.findFirst({
             where: {
                 user: {

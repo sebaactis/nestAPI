@@ -19,7 +19,7 @@ model User {
   userType   UserType @relation(fields: [userTypeId], references: [id])
 
   walletId Int    @unique
-  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet   Wallet?
 
   contact Contact[]
 
@@ -39,7 +39,8 @@ model UserType {
 
 model Wallet {
   id         Int      @id @default(autoincrement())
-  user       User?
+  userId Int? @unique
+  user       User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   currencyId Int
   currency   Currency @relation(fields: [currencyId], references: [id])
   balance    Float
