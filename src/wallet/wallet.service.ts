@@ -3,6 +3,8 @@ import { PrismaService } from "src/prisma.service";
 import { createUserDto } from "src/users/dto/createUserDto";
 import { ChargeDto } from "./dto/chargeDto";
 import { UsersService } from "src/users/users.service";
+import { TransferDto } from "./dto/transferDto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class WalletService {
@@ -113,5 +115,90 @@ export class WalletService {
         })
 
         return extraction;
+    }
+
+    async transfer(email: string, transferDto: TransferDto) {
+        const fromWallet = await this.prismaService.wallet.findFirst({
+            where: {
+                user: {
+                    email
+                }
+            }
+        })
+
+        if (!fromWallet) {
+            throw new Error('From user not found')
+        }
+
+        const toWallet = await this.prismaService.wallet.findFirst({
+            where: {
+                user: {
+                    email: transferDto.toEmail
+                }
+            }
+        })
+
+        if (!toWallet) {
+            throw new Error('Destiny user not found')
+        }
+
+        if (fromWallet.balance < transferDto.amount) {
+            throw new Error('Insufficient funds')
+        }
+
+        try {
+            const transferProcess = await this.prismaService.$transaction(async (prisma) => {
+
+                const transfer = await prisma.transfer.create({
+                    data: {
+                        walletFromId: fromWallet.id,
+                        walletToId: toWallet.id,
+                        currencyId: fromWallet.currencyId,
+                        amount: transferDto.amount,
+                        statusId: 1,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    }
+                })
+
+                const debit = await this.prismaService.transaction.create({
+                    data: {
+                        walletId: fromWallet.id,
+                        typeId: 4,
+                        amount: -transferDto.amount,
+                        description: `Transfer to ${transferDto.toEmail}`,
+                        currencyId: fromWallet.currencyId,
+                        statusId: 1,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    }
+                })
+
+                const credit = await this.prismaService.transaction.create({
+                    data: {
+                        walletId: toWallet.id,
+                        typeId: 5,
+                        amount: transferDto.amount,
+                        description: `Transfer from ${email}`,
+                        currencyId: toWallet.currencyId,
+                        statusId: 1,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    }
+                })
+
+                await this.prismaService.wallet.update({
+                    where: { id: fromWallet.id },
+                    data: { balance: { decrement: transferDto.amount } }
+                });
+
+                await this.prismaService.wallet.update({
+                    where: { id: toWallet.id },
+                    data: { balance: { increment: transferDto.amount } }
+                });
+            })
+        } catch (error) {
+            return error;
+        }
     }
 }

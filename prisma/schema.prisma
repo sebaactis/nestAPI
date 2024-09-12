@@ -8,17 +8,17 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  username String
-  password String
-  recoveryPasswordToken String?
+  id                              Int       @id @default(autoincrement())
+  email                           String    @unique
+  username                        String
+  password                        String
+  recoveryPasswordToken           String?
   recoveryPasswordTokenExpiration DateTime?
 
   userTypeId Int
   userType   UserType @relation(fields: [userTypeId], references: [id])
 
-  walletId Int    @unique
+  walletId Int     @unique
   wallet   Wallet?
 
   contact Contact[]
@@ -39,8 +39,8 @@ model UserType {
 
 model Wallet {
   id         Int      @id @default(autoincrement())
-  userId Int? @unique
-  user       User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int?     @unique
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   currencyId Int
   currency   Currency @relation(fields: [currencyId], references: [id])
   balance    Float
@@ -57,8 +57,8 @@ model Wallet {
 }
 
 model Currency {
-  id   Int    @id @default(autoincrement())
-  name String
+  id          Int    @id @default(autoincrement())
+  name        String
   description String
 
   wallet   Wallet[]
@@ -122,8 +122,9 @@ model Transaction {
 
   walletId Int
   wallet   Wallet @relation(fields: [walletId], references: [id])
-
-  type String
+  
+  typeId   Int
+  type     Type   @relation(fields: [typeId], references: [id])
 
   currencyId Int
   currency   Currency @relation(fields: [currencyId], references: [id])
@@ -136,4 +137,11 @@ model Transaction {
 
   createdAt DateTime
   updatedAt DateTime
+}
+
+model Type {
+  id          Int           @id @default(autoincrement())
+  description String
+
+  Transaction Transaction[]
 }
