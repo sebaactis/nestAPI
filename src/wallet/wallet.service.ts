@@ -1,14 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
-import { createUserDto } from "src/users/dto/createUserDto";
 import { ChargeDto } from "./dto/chargeDto";
-import { UsersService } from "src/users/users.service";
 import { TransferDto } from "./dto/transferDto";
-import { Prisma } from "@prisma/client";
+import { TransferService } from "src/transfer/transfer.service";
+import { TransactionService } from "src/transaction/transaction.service";
 
 @Injectable()
 export class WalletService {
-    constructor(private readonly prismaService: PrismaService) { }
+    constructor(private readonly prismaService: PrismaService, private readonly transferService: TransferService, private readonly transactionService: TransactionService) { }
 
     async create() {
         const wallet = await this.prismaService.wallet.create({
@@ -149,42 +148,27 @@ export class WalletService {
         try {
             const transferProcess = await this.prismaService.$transaction(async (prisma) => {
 
-                const transfer = await prisma.transfer.create({
-                    data: {
-                        walletFromId: fromWallet.id,
-                        walletToId: toWallet.id,
-                        currencyId: fromWallet.currencyId,
-                        amount: transferDto.amount,
-                        statusId: 1,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    }
+
+                const transfer = await this.transferService.create({
+                    fromWalletId: fromWallet.id,
+                    toWalletId: toWallet.id,
+                    currencyId: fromWallet.currencyId,
+                    amount: transferDto.amount
                 })
 
-                const debit = await this.prismaService.transaction.create({
-                    data: {
-                        walletId: fromWallet.id,
-                        typeId: 4,
-                        amount: -transferDto.amount,
-                        description: `Transfer to ${transferDto.toEmail}`,
-                        currencyId: fromWallet.currencyId,
-                        statusId: 1,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    }
+
+                const debit = await this.transactionService.createDebit({
+                    walletId: fromWallet.id,
+                    amount: transferDto.amount,
+                    description: `Transfer to ${transferDto.toEmail}`,
+                    currencyId: fromWallet.currencyId
                 })
 
-                const credit = await this.prismaService.transaction.create({
-                    data: {
-                        walletId: toWallet.id,
-                        typeId: 5,
-                        amount: transferDto.amount,
-                        description: `Transfer from ${email}`,
-                        currencyId: toWallet.currencyId,
-                        statusId: 1,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    }
+                const credit = await this.transactionService.createCredit({
+                    walletId: toWallet.id,
+                    amount: transferDto.amount,
+                    description: `Transfer from ${email}`,
+                    currencyId: toWallet.currencyId
                 })
 
                 await this.prismaService.wallet.update({
