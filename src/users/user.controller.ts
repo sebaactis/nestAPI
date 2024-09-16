@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { createUserDto } from './dto/createUserDto';
 import { UserResponse } from 'src/utils/types';
@@ -62,10 +62,11 @@ export class UserController {
     @UseGuards(AuthJwtGuard)
     @HttpCode(200)
     @Put()
-    async update(@Body() updateUserDto: updateUserDto) {
+    async update(@Req() req, @Body() updateUserDto: updateUserDto) {
 
         try {
-            const updateUser = await this.usersService.update(updateUserDto);
+            const email = req.user.email;
+            const updateUser = await this.usersService.update(email, updateUserDto);
 
             if (!updateUser) {
                 throw new Error('We cant update the user, please check your information and try again');
@@ -86,8 +87,9 @@ export class UserController {
 
     @UseGuards(AuthJwtGuard)
     @Delete('/:email')
-    async delete(@Param('email') email: string) {
+    async delete(@Req() req) {
         try {
+            const email = req.user.email;
             const deleteUser = await this.usersService.delete(email);
 
             if (!deleteUser) {
@@ -110,9 +112,10 @@ export class UserController {
     @UseGuards(AuthJwtGuard)
     @HttpCode(200)
     @Post("/changePassword")
-    async changePassword(@Body() changePasswordDto: ChangePasswordDto) {
+    async changePassword(@Req() req, @Body() changePasswordDto: ChangePasswordDto) {
         try {
-            const changePassword = await this.usersService.changePassword(changePasswordDto);
+            const email = req.user.email;
+            const changePassword = await this.usersService.changePassword(email, changePasswordDto);
 
             if (!changePassword) {
                 throw new Error('We cant update the password user, please check your information and try again');

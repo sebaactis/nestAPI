@@ -43,4 +43,45 @@ export class TransactionService {
         return transaction;
 
     }
+
+    async getAll(userId: number) {
+
+
+        const transactions = await this.prismaService.transaction.findMany({
+            where: {
+                wallet: {
+                    userId: +userId
+                }
+            },
+            include: {
+                type: true,
+                status: true,
+                currency: true
+            }
+        })
+
+        if (transactions.length === 0) {
+            throw new Error('No transaction found, check the user or try again later')
+        }
+
+        return transactions;
+    }
+
+    async getOne(trxId: number) {
+        const transaction = await this.prismaService.transaction.findFirst({
+            where: {
+                id: +trxId
+                
+            },
+            include: {
+                type: true,
+                status: true,
+                currency: true
+            }
+        })
+
+        if(!transaction) throw new Error('No transaction found')
+
+        return transaction;
+    }
 }

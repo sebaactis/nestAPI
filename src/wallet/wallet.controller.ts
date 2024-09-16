@@ -61,6 +61,7 @@ export class WalletController {
     @UseGuards(AuthJwtGuard)
     async transfer(@Req() req, @Body() transferDto: TransferDto) {
         try {
+            
             const transfer = await this.walletService.transfer(req.user.email, transferDto)
 
             return {

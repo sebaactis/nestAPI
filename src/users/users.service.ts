@@ -102,10 +102,10 @@ export class UsersService {
         })
     }
 
-    async update(user: updateUserDto): Promise<User> | null {
+    async update(email: string, user: updateUserDto): Promise<User> | null {
         const userCheck = await this.prisma.user.findFirst({
             where: {
-                email: user.email
+                email
             }
         })
 
@@ -150,10 +150,10 @@ export class UsersService {
         return deleteUser;
     }
 
-    async changePassword(changePasswordDto: ChangePasswordDto) {
+    async changePassword(email: string, changePasswordDto: ChangePasswordDto) {
         const user = await this.prisma.user.findFirst({
             where: {
-                email: changePasswordDto.email
+                email
             }
         })
 
@@ -179,7 +179,7 @@ export class UsersService {
 
         const change = await this.prisma.user.update({
             where: {
-                email: changePasswordDto.email
+                email
             },
             data: {
                 password: newPassword
