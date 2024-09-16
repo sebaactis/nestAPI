@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { createUserDto } from './dto/createUserDto';
@@ -9,11 +9,27 @@ import { ChangePasswordDto } from './dto/changePasswordDto';
 import { createHash, validatePassword } from 'src/utils/password';
 import { randomUUID } from 'crypto';
 import { RecoveryPasswordDto } from './dto/recoveryPasswordDto';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+
 @Injectable()
 export class UsersService {
-    constructor(private readonly prisma: PrismaService, private readonly walletService: WalletService) { }
+    constructor(private readonly prisma: PrismaService, private readonly walletService: WalletService, @Inject(CACHE_MANAGER) private cacheManager: Cache) { }
 
     async findAll(): Promise<UserResponse[]> {
+
+        const usersCached: UserResponse[] = await this.cacheManager.get('usersFindAll')
+
+        if (usersCached) {
+
+            return usersCached.map(user => ({
+                email: user.email,
+                username: user.username,
+                userType: user.userType,
+                wallet: user.wallet,
+                cache: true
+            }))
+        }
+
         const users = await this.prisma.user.findMany({
 
             include: {
@@ -21,6 +37,8 @@ export class UsersService {
                 wallet: true
             }
         })
+
+        await this.cacheManager.set('usersFindAll', users, 1000 * 10)
 
         return users.map(user => ({
             email: user.email,
