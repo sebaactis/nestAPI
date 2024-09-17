@@ -12,7 +12,7 @@ import { GoogleStrategy } from './strategys/google.strategy';
     JwtModule.register({
       global: true,
       secret: jwtConstats.secret,
-      signOptions: { expiresIn: '2m' }
+      signOptions: { expiresIn: '5m' }
     })
   ],
   controllers: [AuthController],

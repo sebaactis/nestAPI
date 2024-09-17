@@ -16,8 +16,10 @@ export class UsersService {
     constructor(private readonly prisma: PrismaService, private readonly walletService: WalletService, @Inject(CACHE_MANAGER) private cacheManager: Cache) { }
 
     async findAll(): Promise<UserResponse[]> {
+        const cacheKey = 'usersFindAll';
+        const ttl = 60 * 1000;
 
-        const usersCached: UserResponse[] = await this.cacheManager.get('usersFindAll')
+        const usersCached: UserResponse[] = await this.cacheManager.get(cacheKey)
 
         if (usersCached) {
 
@@ -26,7 +28,6 @@ export class UsersService {
                 username: user.username,
                 userType: user.userType,
                 wallet: user.wallet,
-                cache: true
             }))
         }
 
@@ -38,7 +39,7 @@ export class UsersService {
             }
         })
 
-        await this.cacheManager.set('usersFindAll', users, 1000 * 10)
+        await this.cacheManager.set(cacheKey, users, ttl)
 
         return users.map(user => ({
             email: user.email,

@@ -6,6 +6,7 @@ import { TransferModule } from './transfer/transfer.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { redisStore } from 'cache-manager-redis-yet';
           }
         })
       })
-    }), UsersModule, AuthModule, WalletModule, TransferModule, TransactionModule
+    }), UsersModule, AuthModule, WalletModule, TransferModule, TransactionModule, ContactModule
   ],
   providers: []
 })
